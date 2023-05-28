@@ -1,0 +1,42 @@
+isolation 02
+
+1: CREATE TABLE students (name TEXT);		# auto commit  
+1: INSERT INTO students VALUES ('James');	# auto commit
+1: BEGIN TRANSACTION;							# no locks added
+1: SELECT * FROM students ORDER BY name;		# shared lock by con 1
+2: BEGIN TRANSACTION;							# no reserved or exclusive lock thus begin in con 2
+2: SELECT * FROM students ORDER BY name;		# shared lock by con 2
+2: INSERT INTO students VALUES ('Yaxin');	# add reserved lock
+2: SELECT * FROM students ORDER BY name;		# another shared lock by con 2 
+1: SELECT * FROM students ORDER BY name;		# another shared lock by con 1
+1: INSERT INTO students VALUES ('Li');		# need to add a reserved lock but reserved lock added thus error.
+
+DATABASE WILL RAISE EXCEPTION
+
+1: SELECT * FROM students ORDER BY name;
+
+Transaction 2
+
+1: CREATE TABLE students (name TEXT);		#auto commit
+1: INSERT INTO students VALUES ('James');	#auto commit
+1: BEGIN TRANSACTION;							#begin in default mode
+1: INSERT INTO students VALUES ('SHOM FROM 1'); #reserved lock by con 1
+1: SELECT * FROM students ORDER BY name;			#shared lock by con 1
+2: BEGIN TRANSACTION;								#no exclusive lock thus can begin
+2: INSERT INTO students VALUES ('SHOM FROM 2');	# reserved lock exists, but by con 1, con 2 needs to give one but cant thus error
+
+DATABASE WILL RAISE EXCEPTION
+
+2: SELECT * FROM students ORDER BY name;
+
+Transaction 3
+
+1: CREATE TABLE students (name TEXT);		#auto commit 
+1: INSERT INTO students VALUES ('James');	#auto commit
+1: BEGIN TRANSACTION;							#all locks default 
+1: SELECT * FROM students ORDER BY name; 	#added shared lock by 1 
+1: INSERT INTO students VALUES ('Yaxin'); 	#added reserved lock by 1
+2: BEGIN TRANSACTION;							#no locks to add
+2: SELECT * FROM students ORDER BY name; 	# another shared lock but by connect 2 
+2: COMMIT TRANSACTION; 				# no exclusive lock just reserved lock, thus commit changes although sshared lock len is greater than by 2
+NO EXCEPTION IT IS VALID
